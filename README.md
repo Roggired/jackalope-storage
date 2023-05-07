@@ -19,3 +19,10 @@ docker run -d --name jackalope-debug -p 42222:22 --cap-add sys_ptrace \
     - **port**: 42222
     - **user**: debugger
     - **password**: pwd
+3. (**Только для CLion**) Конфигурим IDE:
+    - **toolchain**: File -> Settings -> Build, Execution, Deployment -> Toolchains -> Remote Host
+        - заполняем креды из пункта 2
+    - **deployment**: File -> Settings -> Build, Execution, Deployment -> Deployment
+        - заполняем инфу про путь, по которому CLion будет заливать файлы в docker-контейнер
+    - **cmake**: File -> Settings -> Build, Execution, Deployment -> CMake
+        - оставляем поля по умолчанию, однако `build directory` указывает как `build`

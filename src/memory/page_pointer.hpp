@@ -1,0 +1,80 @@
+//
+// Created by roggired on 07.05.23.
+//
+
+#ifndef JACKALOPE_STORAGE_PAGE_POINTER_HPP
+#define JACKALOPE_STORAGE_PAGE_POINTER_HPP
+
+#include <cstdint>
+
+namespace memory {
+    #pragma pack(push, 1)
+
+    #define POINTER_STATUS_UNUSED 0
+    #define POINTER_STATUS_USED   1
+    #define POINTER_XMIN_COMMITTED_MASK 0x01 // 0000 0001
+    #define POINTER_XMIN_ABORTED_MASK   0x02 // 0000 0010
+    #define POINTER_XMAX_COMMITTED_MASK 0x04 // 0000 0100
+    #define POINTER_XMAX_ABORTED_MASK   0x08 // 0000 1000
+    struct PagePointer {
+        int8_t status;
+        int8_t flags;
+        int16_t rowPositionOffset;
+        int32_t xmin;
+        int32_t xmax;
+        int16_t size;
+        int16_t number;
+
+        [[maybe_unused]]
+        [[nodiscard]]
+        bool isXminCommitted() const {
+            return (flags & POINTER_XMIN_COMMITTED_MASK) == POINTER_XMIN_COMMITTED_MASK;
+        }
+
+        [[maybe_unused]]
+        [[nodiscard]]
+        bool isXminAborted() const {
+            return (flags & POINTER_XMIN_ABORTED_MASK) == POINTER_XMIN_ABORTED_MASK;
+        }
+
+        [[maybe_unused]]
+        [[nodiscard]]
+        bool isXmaxCommitted() const {
+            return (flags & POINTER_XMAX_COMMITTED_MASK) == POINTER_XMAX_COMMITTED_MASK;
+        }
+
+        [[maybe_unused]]
+        [[nodiscard]]
+        bool isXmaxAborted() const {
+            return (flags & POINTER_XMAX_ABORTED_MASK) == POINTER_XMAX_ABORTED_MASK;
+        }
+
+        [[maybe_unused]]
+        [[nodiscard]]
+        bool isStatusUsed() const {
+            return status == POINTER_STATUS_USED;
+        }
+
+        [[maybe_unused]]
+        [[nodiscard]]
+        bool isStatusUnused() const {
+            return status == POINTER_STATUS_UNUSED;
+        }
+    };
+    typedef struct PagePointer PagePointer;
+
+    static PagePointer unusedPagePointer() {
+        return {
+            POINTER_STATUS_UNUSED,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        };
+    }
+
+    #pragma pack(pop)
+}
+#endif //JACKALOPE_STORAGE_PAGE_POINTER_HPP

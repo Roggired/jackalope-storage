@@ -64,7 +64,9 @@ include_directories(${src})
 
 list(APPEND PACKAGE_OPTIONS ${CONAN_LIBS})
 
-add_package("example" ${PACKAGE_OPTIONS})
+add_package("model" ${PACKAGE_OPTIONS})
+add_package("memory" ${PACKAGE_OPTIONS})
+add_package("storage_api" ${PACKAGE_OPTIONS})
 
 enable_testing()
 add_subdirectory(tests tests)

@@ -1,5 +1,5 @@
 //
-// Created by roggired on 07.05.23.
+// Created by ego on 07.05.23.
 //
 
 #ifndef JACKALOPE_STORAGE_STORAGE_API_HPP

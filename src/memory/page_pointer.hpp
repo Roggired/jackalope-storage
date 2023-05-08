@@ -1,5 +1,5 @@
 //
-// Created by roggired on 07.05.23.
+// Created by ego on 07.05.23.
 //
 
 #ifndef JACKALOPE_STORAGE_PAGE_POINTER_HPP
@@ -20,10 +20,30 @@ namespace memory {
         int8_t status;
         int8_t flags;
         int16_t rowPositionOffset;
-        int32_t xmin;
-        int32_t xmax;
+        uint32_t xmin;
+        uint32_t xmax;
         int16_t size;
         int16_t number;
+
+        [[maybe_unused]]
+        void setXminCommited() {
+            flags |= POINTER_XMIN_COMMITTED_MASK;
+        }
+
+        [[maybe_unused]]
+        void setXminAborted() {
+            flags |= POINTER_XMIN_ABORTED_MASK;
+        }
+
+        [[maybe_unused]]
+        void setXmaxCommited() {
+            flags |= POINTER_XMAX_COMMITTED_MASK;
+        }
+
+        [[maybe_unused]]
+        void setXmaxAborted() {
+            flags |= POINTER_XMAX_ABORTED_MASK;
+        }
 
         [[maybe_unused]]
         [[nodiscard]]

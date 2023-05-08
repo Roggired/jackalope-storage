@@ -1,5 +1,5 @@
 //
-// Created by roggired on 07.05.23.
+// Created by ego on 07.05.23.
 //
 
 #ifndef JACKALOPE_STORAGE_PAGE_HPP
@@ -16,7 +16,8 @@ namespace memory {
     enum PageGetStatus {
         PGS_OK = 0,
         PGS_INVALID_PID = 1,
-        PGS_POINTER_IS_UNUSED = 2
+        PGS_POINTER_IS_UNUSED = 2,
+        PGS_POINTER_IS_NOT_VISIBLE = 3
     };
 
     struct PageGet {
@@ -37,6 +38,18 @@ namespace memory {
     };
     typedef PagePut PagePut;
     PagePut notEnoughSpacePagePut();
+
+    enum PageRemoveStatus {
+        PRS_OK = 0,
+        PRS_INVALID_PID = 1,
+        PRS_POINTER_IS_UNUSED = 2,
+        PRS_POINTER_IS_NOT_VISIBLE = 3,
+    };
+
+    struct PageRemove {
+        PageRemoveStatus status;
+    };
+    typedef PageRemove PageRemove;
 
     #define PAGE_TYPE_SENSE        1
     #define PAGE_TYPE_INSTANCE     2
@@ -62,14 +75,35 @@ namespace memory {
         // ---- 14 ----
         int16_t reserved;
         // ---- 16 ----
-        int8_t content[PAGE_8_CONTENT_SIZE]{};
+        int8_t content[PAGE_8_CONTENT_SIZE]{0};
+
+        void iterateOverPointers(const std::function<void(PagePointer*)>& consumer);
 
         [[nodiscard]]
-        bool isRequestedPidValid(models::PID requestedPid) const;
-        PagePointer* getPointerByOffset(int16_t offset);
-        void* getUndefinedByOffset(int16_t offset);
-        models::PID pidForPointer(PagePointer* pagePointer) const;
-        static int16_t calcPointerOffsetForPid(models::PID requestedPid);
+        int16_t findFirstUnusedPointerOffset() const;
+
+        [[nodiscard]]
+        int16_t calcPointersNumber() const;
+
+        [[nodiscard]]
+        bool isPidValid(models::PID requestedPid) const;
+
+        [[nodiscard]]
+        PagePointer* createPagePointerOnOffset(uint32_t xid, int16_t targetPointerOffset, Row row);
+
+        void placeRowOnCurrentOffset(Row row);
+
+        [[nodiscard]]
+        Row getRowOnPointerOffset(PagePointer* pointer) const;
+
+        [[nodiscard]]
+        PagePointer* getPointerByOffset(int16_t offset) const;
+
+        [[nodiscard]]
+        models::PID createPidByPointer(PagePointer* pagePointer) const;
+
+        [[nodiscard]]
+        static int16_t calcPointerOffsetByPid(models::PID requestedPid);
     public:
         Page8(
                 int32_t fileNumber,
@@ -137,11 +171,57 @@ namespace memory {
             return (int16_t) (rowsOffset - pointerOffset);
         }
 
+        /**
+         * Returns the Row (header and payload) found by provided models::PID.
+         * <br></br>
+         * <br></br>
+         * <b>NOT THREAD SAFE</b>
+         * @param xid - active transaction ID
+         * @param pid
+         * @return the PageGet struct with the operation status and a Row struct.
+         */
         [[maybe_unused]]
-        PageGet getByPid(models::PID pid);
+        [[nodiscard]]
+        PageGet getByPid(uint32_t xid, models::PID pid) const;
 
+        /**
+         * Place row in the page.
+         * <br></br>
+         * <br></br>
+         * <b>NOT THREAD SAFE</b>
+         * @param xid - active transaction ID
+         * @param row - the struct of a row header and a row content (payload). Bytes from the header and the payload
+         * will be copied into the page content.
+         * @return the PagePut struct with the operation status and a PID which has been associated with created pointer.
+         */
         [[maybe_unused]]
-        PagePut put(Row row);
+        [[nodiscard]]
+        PagePut put(uint32_t xid, Row row);
+
+        /**
+         * 'Removes' (mark xmax for pointer) the pointer associated with given models::PID.
+         * <br></br>
+         * <br></br>
+         * <b>NOT THREAD SAFE</b>
+         * @param xid - active transaction ID
+         * @param pid
+         * @return the PageRemove struct with the operation status.
+         */
+        [[maybe_unused]]
+        [[nodiscard]]
+        PageRemove remove(uint32_t xid, models::PID pid);
+
+        /**
+         * Packs rows in the page content.
+         * <br></br>
+         * <br></br>
+         * <b>NOT THREAD SAFE</b>
+         * @param eventHorizon - the minimum ID of all active transactions.
+         * @return numbers of vacuumed (deleted) rows.
+         */
+        [[maybe_unused]]
+        [[nodiscard]]
+        int16_t vacuum(uint32_t eventHorizon);
     };
 
     #pragma pack(pop)

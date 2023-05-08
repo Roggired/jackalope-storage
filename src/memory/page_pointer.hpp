@@ -83,17 +83,9 @@ namespace memory {
     };
     typedef struct PagePointer PagePointer;
 
-    static PagePointer unusedPagePointer() {
-        return {
-            POINTER_STATUS_UNUSED,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0
-        };
-    }
+    [[maybe_unused]]
+    [[nodiscard]]
+    PagePointer unusedPagePointer();
 
     #pragma pack(pop)
 }

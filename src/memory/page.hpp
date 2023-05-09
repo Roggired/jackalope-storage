@@ -143,6 +143,12 @@ namespace memory {
 
         [[maybe_unused]]
         [[nodiscard]]
+        int8_t getType() const {
+            return pageType;
+        }
+
+        [[maybe_unused]]
+        [[nodiscard]]
         bool isTypeSense() const {
             return pageType == PAGE_TYPE_SENSE;
         }

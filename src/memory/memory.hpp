@@ -8,6 +8,7 @@
 #include "page.hpp"
 #include "page_pointer.hpp"
 #include "row.hpp"
+#include "memory_map.hpp"
 
 namespace memory {
     class [[maybe_unused]] MemoryManager {

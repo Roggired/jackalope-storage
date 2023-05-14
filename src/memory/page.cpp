@@ -12,7 +12,7 @@ using namespace memory;
 // ==================================== PUBLIC SECTION =============================================================
 
 [[maybe_unused]]
-int16_t Page8::vacuum(uint32_t eventHorizon) {
+int16_t Page::vacuum(uint32_t eventHorizon) {
     std::list<PagePointer*> pointers;
     int16_t vacuumedPointersNumber = 0;
 
@@ -88,7 +88,7 @@ int16_t Page8::vacuum(uint32_t eventHorizon) {
 }
 
 [[maybe_unused]]
-PageGet Page8::getByPid(uint32_t xid, models::PID pid) const {
+PageGet Page::getByPid(uint32_t xid, models::PID pid) const {
     if (!isPidValid(pid)) {
         return emptyPageGet(PGS_INVALID_PID);
     }
@@ -100,8 +100,7 @@ PageGet Page8::getByPid(uint32_t xid, models::PID pid) const {
         return emptyPageGet(PGS_POINTER_IS_UNUSED);
     }
 
-    // TODO what about xmin, xmax committed/aborted flags?
-    if (pointer->xmin > xid || (pointer->xmax > 0 && pointer->xmax < xid)) {
+    if (!pointer->isVisibleToTransaction(xid)) {
         return emptyPageGet(PGS_POINTER_IS_NOT_VISIBLE);
     }
 
@@ -114,7 +113,7 @@ PageGet Page8::getByPid(uint32_t xid, models::PID pid) const {
 }
 
 [[maybe_unused]]
-PagePut Page8::put(uint32_t xid, Row row) {
+PagePut Page::put(uint32_t xid, Row row) {
     int16_t rowSize = row.sizeWithHeader();
     int16_t freeSpace = getFreeSpace();
     if (rowSize > freeSpace) {
@@ -146,7 +145,7 @@ PagePut Page8::put(uint32_t xid, Row row) {
 }
 
 [[maybe_unused]]
-PageRemove Page8::remove(uint32_t xid, models::PID pid) {
+PageRemove Page::remove(uint32_t xid, models::PID pid) {
     if (!isPidValid(pid)) {
         return PageRemove{PRS_INVALID_PID};
     }
@@ -158,20 +157,75 @@ PageRemove Page8::remove(uint32_t xid, models::PID pid) {
         return PageRemove{PRS_POINTER_IS_UNUSED};
     }
 
-    // TODO what about xmin, xmax committed/aborted flags?
-    if (pointer->xmin > xid || (pointer->xmax > 0 && pointer->xmax < xid)) {
+    if (!pointer->isVisibleToTransaction(xid)) {
         return PageRemove{PRS_POINTER_IS_NOT_VISIBLE};
     }
 
+    // flags will be set in later operations
     pointer->xmax = xid;
-    //TODO what about committed/aborted flags&
 
     return PageRemove{PRS_OK};
 }
 
+[[maybe_unused]]
+void Page::setCommitted(uint32_t xid, models::PID pid) {
+    if (!isPidValid(pid)) {
+        throw PidInvalidException();
+    }
+
+    int16_t targetPointerOffset = calcPointerOffsetByPid(pid);
+    PagePointer *pointer = getPointerByOffset(targetPointerOffset);
+
+    if (!pointer->isStatusUsed()) {
+        throw PidInvalidException();
+    }
+
+    // setCommitted and setAborted should be used only with xid which is equal to xmin and/or xmax
+    // to set visibility flags, therefore if xid is not equal nor to xmin neither xmax, than PID is invalid
+    if (pointer->xmin != xid && pointer->xmax != xid) {
+        throw PidInvalidException();
+    }
+
+    if (pointer->xmin == xid) {
+        pointer->setXminCommited();
+    }
+
+    if (pointer->xmax == xid) {
+        pointer->setXmaxCommited();
+    }
+}
+
+[[maybe_unused]]
+void Page::setAborted(uint32_t xid, models::PID pid) {
+    if (!isPidValid(pid)) {
+        throw PidInvalidException();
+    }
+
+    int16_t targetPointerOffset = calcPointerOffsetByPid(pid);
+    PagePointer *pointer = getPointerByOffset(targetPointerOffset);
+
+    if (!pointer->isStatusUsed()) {
+        throw PidInvalidException();
+    }
+
+    // setCommitted and setAborted should be used only with xid which is equal to xmin and/or xmax
+    // to set visibility flags, therefore if xid is not equal nor to xmin neither xmax, than PID is invalid
+    if (pointer->xmin != xid && pointer->xmax != xid) {
+        throw PidInvalidException();
+    }
+
+    if (pointer->xmin == xid) {
+        pointer->setXminAborted();
+    }
+
+    if (pointer->xmax == xid) {
+        pointer->setXmaxAborted();
+    }
+}
+
 // ==================================== PRIVATE SECTION =============================================================
 
-void Page8::iterateOverPointers(const std::function<void(PagePointer *)> &consumer) {
+void Page::iterateOverPointers(const std::function<void(PagePointer *)> &consumer) {
     int16_t pointersNumber = calcPointersNumber();
 
     models::PID currentPid(0, 0, 0);
@@ -186,7 +240,7 @@ void Page8::iterateOverPointers(const std::function<void(PagePointer *)> &consum
     }
 }
 
-int16_t Page8::findFirstUnusedPointerOffset() const {
+int16_t Page::findFirstUnusedPointerOffset() const {
     int16_t currentPointerOffset = 0;
     PagePointer* pointer = getPointerByOffset(currentPointerOffset);
     while (pointer->status != POINTER_STATUS_UNUSED && currentPointerOffset < pointerOffset) {
@@ -199,20 +253,20 @@ int16_t Page8::findFirstUnusedPointerOffset() const {
     return currentPointerOffset;
 }
 
-PagePointer *Page8::createPagePointerOnOffset(uint32_t xid, int16_t targetPointerOffset, Row row) {
+PagePointer *Page::createPagePointerOnOffset(uint32_t xid, int16_t targetPointerOffset, Row row) {
     PagePointer *pointer = getPointerByOffset(targetPointerOffset);
     pointer->status = POINTER_STATUS_USED;
     pointer->rowPositionOffset = rowsOffset;
     pointer->size = (int16_t) row.sizeWithHeader();
     pointer->number = calcPointersNumber();
+    // flags will be set in later operations
     pointer->xmin = xid;
-    //TODO what about xmin committed/aborted flags?
     pointer->xmax = 0;
     pointer->setXmaxAborted();
     return pointer;
 }
 
-void Page8::placeRowOnCurrentOffset(Row row) {
+void Page::placeRowOnCurrentOffset(Row row) {
     auto copyStart = (int8_t *) row.rowHeader;
     int8_t *copyEnds = (int8_t *) row.rowHeader + sizeof(RowHeader);
     int8_t *copyTo = (int8_t *) content + rowsOffset;
@@ -224,7 +278,7 @@ void Page8::placeRowOnCurrentOffset(Row row) {
     std::copy(copyStart, copyEnds, copyTo);
 }
 
-Row Page8::getRowOnPointerOffset(PagePointer *pointer) const {
+Row Page::getRowOnPointerOffset(PagePointer *pointer) const {
     auto undefined = (void *) (content + pointer->rowPositionOffset);
     auto payload = (void *) ((int8_t *) undefined + sizeof(RowHeader));
     auto rowHeader = (RowHeader *) undefined;
@@ -234,19 +288,19 @@ Row Page8::getRowOnPointerOffset(PagePointer *pointer) const {
     };
 }
 
-int16_t Page8::calcPointersNumber() const {
+int16_t Page::calcPointersNumber() const {
     return (int16_t) (pointerOffset / sizeof(PagePointer));
 }
 
-models::PID Page8::createPidByPointer(PagePointer *pagePointer) const {
+models::PID Page::createPidByPointer(PagePointer *pagePointer) const {
     return {fileNumber, pageNumber, pagePointer->number};
 }
 
-int16_t Page8::calcPointerOffsetByPid(models::PID requestedPid) {
+int16_t Page::calcPointerOffsetByPid(models::PID requestedPid) {
     return (int16_t) (requestedPid.getRowPointerNumber() * sizeof(PagePointer));
 }
 
-bool Page8::isPidValid(models::PID requestedPid) const {
+bool Page::isPidValid(models::PID requestedPid) const {
     bool fileCorrect = fileNumber == requestedPid.getFileNumber();
     bool pageCorrect = pageNumber == requestedPid.getPageNumber();
 
@@ -256,7 +310,7 @@ bool Page8::isPidValid(models::PID requestedPid) const {
     return fileCorrect && pageCorrect && pointerCorrect;
 }
 
-PagePointer *Page8::getPointerByOffset(int16_t offset) const {
+PagePointer *Page::getPointerByOffset(int16_t offset) const {
     return (PagePointer *) (void *) (content + offset);
 }
 

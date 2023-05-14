@@ -51,6 +51,8 @@ namespace memory {
     };
     typedef PageRemove PageRemove;
 
+    class PidInvalidException : public std::exception {};
+
     #define PAGE_TYPE_SENSE        1
     #define PAGE_TYPE_INSTANCE     2
     #define PAGE_TYPE_REFERENCE    3
@@ -58,7 +60,14 @@ namespace memory {
     #define PAGE_8_HEADER_SIZE     16
     #define PAGE_8_CONTENT_SIZE    8176
     #define PAGE_8_SIZE            8192
-    class [[maybe_unused]] Page8 {
+    /**
+     * Page (currently only 8KB size is supported) is a low-level abstraction which provides interface for
+     * put, get, remove, vacuum, commit, abort. It stores rows in itself, so we need to only allocate memory for
+     * a page and we will be able to store rows.
+     *
+     * @author ego
+     */
+    class [[maybe_unused]] Page {
     private:
         // ---- 0 ----
         int32_t fileNumber;
@@ -105,7 +114,7 @@ namespace memory {
         [[nodiscard]]
         static int16_t calcPointerOffsetByPid(models::PID requestedPid);
     public:
-        Page8(
+        Page(
                 int32_t fileNumber,
                 int32_t pageNumber,
                 int8_t pageType
@@ -120,12 +129,12 @@ namespace memory {
         }
 
         [[maybe_unused]]
-        Page8(
+        Page(
                 int32_t fileNumber,
                 int32_t pageNumber,
                 int8_t pageType,
                 int8_t* content
-        ) : Page8(fileNumber, pageNumber, pageType) {
+        ) : Page(fileNumber, pageNumber, pageType) {
             std::copy(content, content + PAGE_8_CONTENT_SIZE, this->content);
         }
 
@@ -228,6 +237,24 @@ namespace memory {
         [[maybe_unused]]
         [[nodiscard]]
         int16_t vacuum(uint32_t eventHorizon);
+
+        /**
+         * Sets xmin and/or xmax as committed for given pid. This function will set committed flag for
+         * xmin if xid == xmin, will set committed flag for xmax if xid == xmax.
+         * @param xid - active transaction ID
+         * @param pid
+         */
+        [[maybe_unused]]
+        void setCommitted(uint32_t xid, models::PID pid);
+
+        /**
+         * Sets xmin and/or xmax as aborted for given pid. This function will set aborted flag for
+         * xmin if xid == xmin, will set aborted flag for xmax if xid == xmax.
+         * @param xid - active transaction ID
+         * @param pid
+         */
+        [[maybe_unused]]
+        void setAborted(uint32_t xid, models::PID pid);
     };
 
     #pragma pack(pop)

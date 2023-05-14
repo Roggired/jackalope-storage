@@ -18,3 +18,17 @@ PagePointer memory::unusedPagePointer() {
             0
     };
 }
+
+[[maybe_unused]]
+[[nodiscard]]
+bool PagePointer::isVisibleToTransaction(uint32_t xid) const {
+    if (xmin > xid || (xmin < xid && !isXminCommitted())) {
+        return false;
+    }
+
+    if (xmax == xid || (xmax > 0 && xmax < xid && isXmaxCommitted())) {
+        return false;
+    }
+
+    return true;
+}

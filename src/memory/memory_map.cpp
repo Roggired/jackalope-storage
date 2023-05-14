@@ -17,7 +17,7 @@ Key memoryMapKey::keyByPid(models::PID pid) {
 }
 
 [[maybe_unused]]
-Key memoryMapKey::keyByPage8(const Page8 *page) {
+Key memoryMapKey::keyByPage8(const Page *page) {
     return createKey(page->getFileNumber(), page->getPageNumber());
 }
 
@@ -39,7 +39,7 @@ int32_t memoryMapKey::pageNumberByKey(Key key) {
 }
 
 [[maybe_unused]]
-Page8& MemoryMap8::loadPage8(const Page8 *page8) {
+Page& MemoryMap::loadPage(const Page *page8) {
     Key key = keyByPage8(page8);
 
     auto existedPage = pageMap.find(key);
@@ -62,7 +62,7 @@ Page8& MemoryMap8::loadPage8(const Page8 *page8) {
 }
 
 [[maybe_unused]]
-Page8& MemoryMap8::createPage8(FileHeader fileHeader, int8_t pageType) {
+Page& MemoryMap::createPage8(FileHeader fileHeader, int8_t pageType) {
     Key key = createKey(fileHeader.fileNumber, fileHeader.pagesNumber);
 
     auto existedPage = pageMap.find(key);
@@ -77,8 +77,8 @@ Page8& MemoryMap8::createPage8(FileHeader fileHeader, int8_t pageType) {
 
     auto iterator = pageMap.insert(
             {
-                key,
-                Page8(
+                    key,
+                    Page(
                         fileNumberByKey(key),
                         pageNumberByKey(key),
                         pageType
@@ -89,7 +89,7 @@ Page8& MemoryMap8::createPage8(FileHeader fileHeader, int8_t pageType) {
 }
 
 [[maybe_unused]]
-void MemoryMap8::unloadPage8(Key key) {
+void MemoryMap::unloadPage(memoryMapKey::Key key) {
     auto existedPage = pageMap.find(key);
     if (existedPage != pageMap.end()) {
         throw NoSuchPageException();
@@ -99,7 +99,7 @@ void MemoryMap8::unloadPage8(Key key) {
 }
 
 [[maybe_unused]]
-Page8& MemoryMap8::getPage8ByKey(Key key) {
+Page& MemoryMap::getPageByKey(memoryMapKey::Key key) {
     auto pageIterator = pageMap.find(key);
     if (pageIterator != pageMap.end()) {
         throw NoSuchPageException();

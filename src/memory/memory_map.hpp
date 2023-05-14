@@ -27,7 +27,7 @@ namespace memory {
 
         [[maybe_unused]]
         [[nodiscard]]
-        Key keyByPage8(const Page8* page);
+        Key keyByPage8(const Page* page);
 
         [[maybe_unused]]
         [[nodiscard]]
@@ -47,14 +47,26 @@ namespace memory {
     class MemoryLimitException : public exception {};
     class FileHeaderInvalidPagesNumberException : public exception {};
 
-    class [[maybe_unused]] MemoryMap8 {
+    /**
+     * MemoryMap is an abstraction of the available memory space. It stores pages by memory keys
+     * (fileNumber + pageNumber). We should provide the memory limit value in the constructor to
+     * prevent MemoryMap from uncontrolled growing. It should be thread safe (currently not).
+     * MemoryMap stores pages internally in the std::unordered_map, therefore lookup operations are
+     * really fast (but, keep in mind the worst case of O(n)).
+     *
+     * We need only to allocate memory for MemoryMap in the appropriate space (process-local or shared memory) and
+     * we will get ready memory modal to work with.
+     *
+     * @author ego
+     */
+    class [[maybe_unused]] MemoryMap {
     private:
-        unordered_map<memoryMapKey::Key, Page8> pageMap{};
+        unordered_map<memoryMapKey::Key, Page> pageMap{};
         uint32_t memoryLimit;
 
     public:
         [[maybe_unused]]
-        explicit MemoryMap8(uint32_t memoryLimit): memoryLimit(memoryLimit) {}
+        explicit MemoryMap(uint32_t memoryLimit): memoryLimit(memoryLimit) {}
 
         /**
          * Copies given page into the pageMap.
@@ -68,7 +80,7 @@ namespace memory {
          */
         [[maybe_unused]]
         [[nodiscard]]
-        Page8& loadPage8(const Page8* page8);
+        Page& loadPage(const Page* page8);
 
         /**
          * Creates new page and place it into pageMap. Key is generated with fileName and pagesNumber from FileHeader.
@@ -83,7 +95,7 @@ namespace memory {
          */
         [[maybe_unused]]
         [[nodiscard]]
-        Page8& createPage8(FileHeader fileHeader, int8_t pageType);
+        Page& createPage8(FileHeader fileHeader, int8_t pageType);
 
         /**
          * Removes page with associated key from pageMap.
@@ -94,7 +106,7 @@ namespace memory {
          * @throw NoSuchPageException
          */
         [[maybe_unused]]
-        void unloadPage8(memoryMapKey::Key key);
+        void unloadPage(memoryMapKey::Key key);
 
         /**
          * Returns reference to the page by given key.
@@ -107,7 +119,7 @@ namespace memory {
          */
         [[maybe_unused]]
         [[nodiscard]]
-        Page8& getPage8ByKey(memoryMapKey::Key key);
+        Page& getPageByKey(memoryMapKey::Key key);
     };
 }
 #endif //JACKALOPE_STORAGE_MEMORY_MAP_HPP

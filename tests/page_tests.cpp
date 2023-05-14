@@ -115,28 +115,28 @@ BOOST_AUTO_TEST_SUITE(pointer_tests)
     }
 
     BOOST_AUTO_TEST_CASE(page_type_test) {
-        auto page = new Page8(0, 10, PAGE_TYPE_SENSE);
+        auto page = new Page(0, 10, PAGE_TYPE_SENSE);
         BOOST_CHECK_EQUAL(true, page->isTypeSense());
         BOOST_CHECK_EQUAL(false, page->isTypeInstance());
         BOOST_CHECK_EQUAL(false, page->isTypeReference());
         BOOST_CHECK_EQUAL(false, page->isTypeWordform());
         delete page;
 
-        page = new Page8(0, 10, PAGE_TYPE_INSTANCE);
+        page = new Page(0, 10, PAGE_TYPE_INSTANCE);
         BOOST_CHECK_EQUAL(false, page->isTypeSense());
         BOOST_CHECK_EQUAL(true, page->isTypeInstance());
         BOOST_CHECK_EQUAL(false, page->isTypeReference());
         BOOST_CHECK_EQUAL(false, page->isTypeWordform());
         delete page;
 
-        page = new Page8(0, 10, PAGE_TYPE_REFERENCE);
+        page = new Page(0, 10, PAGE_TYPE_REFERENCE);
         BOOST_CHECK_EQUAL(false, page->isTypeSense());
         BOOST_CHECK_EQUAL(false, page->isTypeInstance());
         BOOST_CHECK_EQUAL(true, page->isTypeReference());
         BOOST_CHECK_EQUAL(false, page->isTypeWordform());
         delete page;
 
-        page = new Page8(0, 10, PAGE_TYPE_WORDFORM);
+        page = new Page(0, 10, PAGE_TYPE_WORDFORM);
         BOOST_CHECK_EQUAL(false, page->isTypeSense());
         BOOST_CHECK_EQUAL(false, page->isTypeInstance());
         BOOST_CHECK_EQUAL(false, page->isTypeReference());
@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_SUITE(pointer_tests)
     }
 
     BOOST_AUTO_TEST_CASE(page_8_size_test) {
-        Page8 page8 = Page8(0, 0, PAGE_TYPE_SENSE);
+        Page page8 = Page(0, 0, PAGE_TYPE_SENSE);
         BOOST_CHECK_EQUAL(8 * 1024, sizeof(page8));
     }
 
@@ -160,12 +160,14 @@ BOOST_AUTO_TEST_SUITE(pointer_tests)
         // Row size - 528
         RowHeader rowHeader = init_row_header();
 
-        auto page = new Page8(0, 10, PAGE_TYPE_SENSE);
+        auto page = new Page(0, 10, PAGE_TYPE_SENSE);
         PagePut pagePut = page->put(2, {&rowHeader, &testStruct});
         BOOST_CHECK_EQUAL(PPS_OK, pagePut.status);
         BOOST_CHECK_EQUAL(0, pagePut.pid.getFileNumber());
         BOOST_CHECK_EQUAL(10, pagePut.pid.getPageNumber());
         BOOST_CHECK_EQUAL(0, pagePut.pid.getRowPointerNumber());
+
+        page->setCommitted(2, pagePut.pid);
 
         PageGet pageGet = page->getByPid(3, pagePut.pid);
         BOOST_CHECK_EQUAL(PGS_OK, pageGet.status);
@@ -188,8 +190,8 @@ BOOST_AUTO_TEST_SUITE(pointer_tests)
         delete page;
     }
 
-    BOOST_AUTO_TEST_CASE(page_multiple_put_single_get_test) {
-        auto page = new Page8(0, 10, PAGE_TYPE_SENSE);
+    BOOST_AUTO_TEST_CASE(page_multiple_put_single_get_same_transaction_test) {
+        auto page = new Page(0, 10, PAGE_TYPE_SENSE);
 
         models::PID targetPID(0, 0, 0);
         size_t amountOfRows = 15;
@@ -222,7 +224,7 @@ BOOST_AUTO_TEST_SUITE(pointer_tests)
     }
 
     BOOST_AUTO_TEST_CASE(page_put_not_enough_space_test) {
-        auto page = new Page8(0, 10, PAGE_TYPE_SENSE);
+        auto page = new Page(0, 10, PAGE_TYPE_SENSE);
 
         size_t amountOfRows = 15;
         for (size_t i = 0; i < amountOfRows; i++) {
@@ -241,7 +243,7 @@ BOOST_AUTO_TEST_SUITE(pointer_tests)
     }
 
     BOOST_AUTO_TEST_CASE(page_get_invalid_pid_test) {
-        auto page = new Page8(0, 10, PAGE_TYPE_SENSE);
+        auto page = new Page(0, 10, PAGE_TYPE_SENSE);
         PageGet pageGet = page->getByPid(1, models::PID(1, 10, 0));
         BOOST_CHECK_EQUAL(PGS_INVALID_PID, pageGet.status);
         pageGet = page->getByPid(1, models::PID(0, 9, 0));
@@ -279,7 +281,7 @@ BOOST_AUTO_TEST_SUITE(pointer_tests)
                 1045
         );
 
-        auto page = new Page8(0, 1, PAGE_TYPE_SENSE, (int8_t *) content);
+        auto page = new Page(0, 1, PAGE_TYPE_SENSE, (int8_t *) content);
         auto *ptrToPointerOffset = (int16_t *) ((int8_t *) page + 10);
         auto *ptrToRowsOffset = ptrToPointerOffset + 1;
         *ptrToPointerOffset = sizeof(PagePointer) * 2;
@@ -340,7 +342,7 @@ BOOST_AUTO_TEST_SUITE(pointer_tests)
                 1045
         );
 
-        auto page = new Page8(0, 1, PAGE_TYPE_SENSE, (int8_t *) content);
+        auto page = new Page(0, 1, PAGE_TYPE_SENSE, (int8_t *) content);
         auto *ptrToPointerOffset = (int16_t *) ((int8_t *) page + 10);
         auto *ptrToRowsOffset = ptrToPointerOffset + 1;
         *ptrToPointerOffset = sizeof(PagePointer) * 2;
@@ -400,7 +402,7 @@ BOOST_AUTO_TEST_SUITE(pointer_tests)
                 1045
         );
 
-        auto page = new Page8(0, 1, PAGE_TYPE_SENSE, (int8_t *) content);
+        auto page = new Page(0, 1, PAGE_TYPE_SENSE, (int8_t *) content);
         auto *ptrToPointerOffset = (int16_t *) ((int8_t *) page + 10);
         auto *ptrToRowsOffset = ptrToPointerOffset + 1;
         *ptrToPointerOffset = sizeof(PagePointer) * 2;
@@ -420,14 +422,18 @@ BOOST_AUTO_TEST_SUITE(pointer_tests)
     }
 
     BOOST_AUTO_TEST_CASE(page_remove_test) {
-        auto *page = new Page8(0, 10, PAGE_TYPE_SENSE);
+        auto *page = new Page(0, 10, PAGE_TYPE_SENSE);
         TestStruct testStruct = init_test_struct();
         RowHeader rowHeader = init_row_header();
         PagePut pagePut = page->put(2, {&rowHeader, &testStruct});
         BOOST_CHECK_EQUAL(PPS_OK, pagePut.status);
 
+        page->setCommitted(2, pagePut.pid);
+
         PageRemove pageRemove = page->remove(3, pagePut.pid);
         BOOST_CHECK_EQUAL(PRS_OK, pageRemove.status);
+
+        page->setCommitted(3, pagePut.pid);
 
         pageRemove = page->remove(4, models::PID(0, 10, 123));
         BOOST_CHECK_EQUAL(PRS_INVALID_PID, pageRemove.status);
@@ -439,20 +445,75 @@ BOOST_AUTO_TEST_SUITE(pointer_tests)
         BOOST_CHECK_EQUAL(PRS_POINTER_IS_NOT_VISIBLE, pageRemove.status);
     }
 
-    BOOST_AUTO_TEST_CASE(page_put_remove_get_test) {
-        auto *page = new Page8(0, 10, PAGE_TYPE_SENSE);
+    BOOST_AUTO_TEST_CASE(page_put_remove_get_test_1) {
+        // put - committed
+        // remove - committed
+        // get - not visible
+        auto *page = new Page(0, 10, PAGE_TYPE_SENSE);
         TestStruct testStruct = init_test_struct();
         RowHeader rowHeader = init_row_header();
         PagePut pagePut = page->put(2, {&rowHeader, &testStruct});
         BOOST_CHECK_EQUAL(PPS_OK, pagePut.status);
 
+        page->setCommitted(2, pagePut.pid);
+
         PageRemove pageRemove = page->remove(3, pagePut.pid);
         BOOST_CHECK_EQUAL(PRS_OK, pageRemove.status);
+
+        page->setCommitted(3, pagePut.pid);
 
         PageGet pageGet = page->getByPid(1, pagePut.pid);
         BOOST_CHECK_EQUAL(PGS_POINTER_IS_NOT_VISIBLE, pageGet.status);
 
         pageGet = page->getByPid(4, pagePut.pid);
+        BOOST_CHECK_EQUAL(PGS_POINTER_IS_NOT_VISIBLE, pageGet.status);
+    }
+
+    BOOST_AUTO_TEST_CASE(page_put_remove_get_test_2) {
+        // put - committed
+        // remove - aborted
+        // get - ok
+        auto *page = new Page(0, 10, PAGE_TYPE_SENSE);
+        TestStruct testStruct = init_test_struct();
+        RowHeader rowHeader = init_row_header();
+        PagePut pagePut = page->put(2, {&rowHeader, &testStruct});
+        BOOST_CHECK_EQUAL(PPS_OK, pagePut.status);
+
+        page->setCommitted(2, pagePut.pid);
+
+        PageRemove pageRemove = page->remove(3, pagePut.pid);
+        BOOST_CHECK_EQUAL(PRS_OK, pageRemove.status);
+
+        page->setAborted(3, pagePut.pid);
+
+        PageGet pageGet = page->getByPid(4, pagePut.pid);
+        BOOST_CHECK_EQUAL(PGS_OK, pageGet.status);
+    }
+
+    BOOST_AUTO_TEST_CASE(page_put_get_single_transaction_test) {
+        auto *page = new Page(0, 10, PAGE_TYPE_SENSE);
+        TestStruct testStruct = init_test_struct();
+        RowHeader rowHeader = init_row_header();
+        PagePut pagePut = page->put(2, {&rowHeader, &testStruct});
+        BOOST_CHECK_EQUAL(PPS_OK, pagePut.status);
+
+        PageGet pageGet = page->getByPid(2, pagePut.pid);
+        BOOST_CHECK_EQUAL(PGS_OK, pageGet.status);
+    }
+
+    BOOST_AUTO_TEST_CASE(page_remove_get_single_transaction_test) {
+        auto *page = new Page(0, 10, PAGE_TYPE_SENSE);
+        TestStruct testStruct = init_test_struct();
+        RowHeader rowHeader = init_row_header();
+        PagePut pagePut = page->put(2, {&rowHeader, &testStruct});
+        BOOST_CHECK_EQUAL(PPS_OK, pagePut.status);
+
+        page->setCommitted(2, pagePut.pid);
+
+        PageRemove pageRemove = page->remove(3, pagePut.pid);
+        BOOST_CHECK_EQUAL(PRS_OK, pageRemove.status);
+
+        PageGet pageGet = page->getByPid(3, pagePut.pid);
         BOOST_CHECK_EQUAL(PGS_POINTER_IS_NOT_VISIBLE, pageGet.status);
     }
 

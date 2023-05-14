@@ -11,11 +11,6 @@
 #include "memory_map.hpp"
 
 namespace memory {
-    class [[maybe_unused]] MemoryManager {
-    private:
 
-    public:
-
-    };
 }
 #endif //JACKALOPE_STORAGE_MEMORY_HPP

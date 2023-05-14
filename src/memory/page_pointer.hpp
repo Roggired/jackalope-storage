@@ -80,6 +80,10 @@ namespace memory {
         bool isStatusUnused() const {
             return status == POINTER_STATUS_UNUSED;
         }
+
+        [[maybe_unused]]
+        [[nodiscard]]
+        bool isVisibleToTransaction(uint32_t xid) const;
     };
     typedef struct PagePointer PagePointer;
 

@@ -40,6 +40,8 @@ int32_t memoryMapKey::pageNumberByKey(Key key) {
 
 [[maybe_unused]]
 Page& MemoryMap::loadPage(const Page *page8) {
+    lock_guard<mutex> locker(pageMapMutex);
+
     Key key = keyByPage8(page8);
 
     auto existedPage = pageMap.find(key);
@@ -63,6 +65,8 @@ Page& MemoryMap::loadPage(const Page *page8) {
 
 [[maybe_unused]]
 Page& MemoryMap::createPage8(FileHeader fileHeader, int8_t pageType) {
+    lock_guard<mutex> locker(pageMapMutex);
+
     Key key = createKey(fileHeader.fileNumber, fileHeader.pagesNumber);
 
     auto existedPage = pageMap.find(key);
@@ -90,6 +94,8 @@ Page& MemoryMap::createPage8(FileHeader fileHeader, int8_t pageType) {
 
 [[maybe_unused]]
 void MemoryMap::unloadPage(memoryMapKey::Key key) {
+    lock_guard<mutex> locker(pageMapMutex);
+
     auto existedPage = pageMap.find(key);
     if (existedPage != pageMap.end()) {
         throw NoSuchPageException();
@@ -100,6 +106,8 @@ void MemoryMap::unloadPage(memoryMapKey::Key key) {
 
 [[maybe_unused]]
 Page& MemoryMap::getPageByKey(memoryMapKey::Key key) {
+    lock_guard<mutex> locker(pageMapMutex);
+
     auto pageIterator = pageMap.find(key);
     if (pageIterator != pageMap.end()) {
         throw NoSuchPageException();

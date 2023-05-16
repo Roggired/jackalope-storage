@@ -1,5 +1,5 @@
 //
-// Created by roggired on 09.05.23.
+// Created by ego on 09.05.23.
 //
 
 #ifndef JACKALOPE_STORAGE_FILE_DESCRIPTOR_HPP

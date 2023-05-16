@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <cstdint>
 #include <cstddef>
+#include <mutex>
 #include "page.hpp"
 #include "file_header.hpp"
 #include "model/semnet_models.hpp"
@@ -63,6 +64,7 @@ namespace memory {
     private:
         unordered_map<memoryMapKey::Key, Page> pageMap{};
         uint32_t memoryLimit;
+        mutex pageMapMutex{};
 
     public:
         [[maybe_unused]]
@@ -72,7 +74,7 @@ namespace memory {
          * Copies given page into the pageMap.
          * <br></br>
          * <br></br>
-         * <b>NOT THREAD SAFE</b>
+         * <b>THREAD SAFE</b>
          * @param page8
          * @throw PageExistsException if Key associated with given page is already in use
          * @throw MemoryLimitException if creation violates memoryLimit
@@ -87,7 +89,7 @@ namespace memory {
          * Calling code should modify FileHeader by itself.
          * <br></br>
          * <br></br>
-         * <b>NOT THREAD SAFE</b>
+         * <b>THREAD SAFE</b>
          * @param fileNumber
          * @throw FileHeaderInvalidPagesNumberException if key(fileNumber, pagesNumber) is already in pageMap
          * @throw MemoryLimitException if creation violates memoryLimit
@@ -101,7 +103,7 @@ namespace memory {
          * Removes page with associated key from pageMap.
          * <br></br>
          * <br></br>
-         * <b>NOT THREAD SAFE</b>
+         * <b>THREAD SAFE</b>
          * @param key
          * @throw NoSuchPageException
          */
@@ -112,7 +114,7 @@ namespace memory {
          * Returns reference to the page by given key.
          * <br></br>
          * <br></br>
-         * <b>NOT THREAD SAFE</b>
+         * <b>THREAD SAFE</b>
          * @param key
          * @throw NoSuchPageException
          * @return

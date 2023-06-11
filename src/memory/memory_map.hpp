@@ -32,15 +32,15 @@ namespace memory {
 
         [[maybe_unused]]
         [[nodiscard]]
-        Key createKey(int32_t fileNumber, int32_t pageNumber);
+        Key createKey(uint32_t fileNumber, uint16_t pageNumber);
 
         [[maybe_unused]]
         [[nodiscard]]
-        int32_t fileNumberByKey(Key key);
+        uint32_t fileNumberByKey(Key key);
 
         [[maybe_unused]]
         [[nodiscard]]
-        int32_t pageNumberByKey(Key key);
+        uint16_t pageNumberByKey(Key key);
     }
 
     class NoSuchPageException : public exception {};

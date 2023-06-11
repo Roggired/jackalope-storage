@@ -70,19 +70,19 @@ namespace memory {
     class [[maybe_unused]] Page {
     private:
         // ---- 0 ----
-        int32_t fileNumber;
+        uint32_t fileNumber;
         // ---- 4 ----
-        int32_t pageNumber;
+        uint16_t pageNumber;
+        // ---- 6 ----
+        uint8_t pageType;
+        // ---- 7 ----
+        uint8_t typeVersion; // not used yet
         // ---- 8 ----
-        int8_t pageType;
-        // ---- 9 ----
-        int8_t typeVersion; // not used yet
+        uint16_t pointerOffset; // first free byte in content
         // ---- 10 ----
-        int16_t pointerOffset; // first free byte in content
+        uint16_t rowsOffset; // last not-free byte in content or undefined
         // ---- 12 ----
-        int16_t rowsOffset; // last not-free byte in content or undefined
-        // ---- 14 ----
-        int16_t reserved;
+        uint32_t reserved;
         // ---- 16 ----
         int8_t content[PAGE_8_CONTENT_SIZE]{0};
 
@@ -92,13 +92,13 @@ namespace memory {
         int16_t findFirstUnusedPointerOffset() const;
 
         [[nodiscard]]
-        int16_t calcPointersNumber() const;
+        uint16_t calcPointersNumber() const;
 
         [[nodiscard]]
         bool isPidValid(models::PID requestedPid) const;
 
         [[nodiscard]]
-        PagePointer* createPagePointerOnOffset(uint32_t xid, int16_t targetPointerOffset, Row row);
+        PagePointer* createPagePointerOnOffset(uint32_t xid, uint16_t targetPointerOffset, Row row);
 
         void placeRowOnCurrentOffset(Row row);
 
@@ -106,18 +106,18 @@ namespace memory {
         Row getRowOnPointerOffset(PagePointer* pointer) const;
 
         [[nodiscard]]
-        PagePointer* getPointerByOffset(int16_t offset) const;
+        PagePointer* getPointerByOffset(uint16_t offset) const;
 
         [[nodiscard]]
         models::PID createPidByPointer(PagePointer* pagePointer) const;
 
         [[nodiscard]]
-        static int16_t calcPointerOffsetByPid(models::PID requestedPid);
+        static uint16_t calcPointerOffsetByPid(models::PID requestedPid);
     public:
         Page(
-                int32_t fileNumber,
-                int32_t pageNumber,
-                int8_t pageType
+                uint32_t fileNumber,
+                uint16_t pageNumber,
+                uint8_t pageType
         ) {
             this->fileNumber = fileNumber;
             this->pageNumber = pageNumber;
@@ -130,9 +130,9 @@ namespace memory {
 
         [[maybe_unused]]
         Page(
-                int32_t fileNumber,
-                int32_t pageNumber,
-                int8_t pageType,
+                uint32_t fileNumber,
+                uint16_t pageNumber,
+                uint8_t pageType,
                 int8_t* content
         ) : Page(fileNumber, pageNumber, pageType) {
             std::copy(content, content + PAGE_8_CONTENT_SIZE, this->content);
@@ -140,19 +140,19 @@ namespace memory {
 
         [[maybe_unused]]
         [[nodiscard]]
-        int32_t getFileNumber() const {
+        uint32_t getFileNumber() const {
             return fileNumber;
         }
 
         [[maybe_unused]]
         [[nodiscard]]
-        int32_t getPageNumber() const {
+        uint16_t getPageNumber() const {
             return pageNumber;
         }
 
         [[maybe_unused]]
         [[nodiscard]]
-        int8_t getType() const {
+        uint8_t getType() const {
             return pageType;
         }
 
@@ -182,7 +182,7 @@ namespace memory {
 
         [[maybe_unused]]
         [[nodiscard]]
-        int16_t getFreeSpace() const {
+        uint16_t getFreeSpace() const {
             return (int16_t) (rowsOffset - pointerOffset);
         }
 
@@ -236,7 +236,7 @@ namespace memory {
          */
         [[maybe_unused]]
         [[nodiscard]]
-        int16_t vacuum(uint32_t eventHorizon);
+        uint16_t vacuum(uint32_t eventHorizon);
 
         /**
          * Sets xmin and/or xmax as committed for given pid. This function will set committed flag for

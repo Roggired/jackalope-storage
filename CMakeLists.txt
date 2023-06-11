@@ -67,6 +67,7 @@ list(APPEND PACKAGE_OPTIONS ${CONAN_LIBS})
 add_package("model" ${PACKAGE_OPTIONS})
 add_package("memory" ${PACKAGE_OPTIONS})
 add_package("storage_api" ${PACKAGE_OPTIONS})
+add_package("free_space_index" ${PACKAGE_OPTIONS})
 
 enable_testing()
 add_subdirectory(tests tests)

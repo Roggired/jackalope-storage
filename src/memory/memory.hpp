@@ -9,6 +9,7 @@
 #include "page_pointer.hpp"
 #include "row.hpp"
 #include "memory_map.hpp"
+#include "memory_map_factory.hpp"
 
 namespace memory {
 

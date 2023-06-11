@@ -10,35 +10,35 @@
 namespace models {
     class PID {
     private:
-        int32_t fileNumber;
-        int32_t pageNumber;
-        int16_t rowPointerNumber;
+        uint32_t fileNumber;
+        uint16_t pageNumber;
+        uint16_t rowPointerNumber;
 
     public:
         [[maybe_unused]]
         PID(
-                int32_t fileNumber,
-                int32_t pageNumber,
-                int16_t rowPointerNumber
+                uint32_t fileNumber,
+                uint16_t pageNumber,
+                uint16_t rowPointerNumber
         ) : fileNumber(fileNumber),
             pageNumber(pageNumber),
             rowPointerNumber(rowPointerNumber) {}
 
         [[maybe_unused]]
         [[nodiscard]]
-        int32_t getFileNumber() const {
+        uint32_t getFileNumber() const {
             return fileNumber;
         }
 
         [[maybe_unused]]
         [[nodiscard]]
-        int32_t getPageNumber() const {
+        uint16_t getPageNumber() const {
             return pageNumber;
         }
 
         [[maybe_unused]]
         [[nodiscard]]
-        int16_t getRowPointerNumber() const {
+        uint16_t getRowPointerNumber() const {
             return rowPointerNumber;
         }
     };
@@ -59,19 +59,19 @@ namespace models {
 
         [[maybe_unused]]
         [[nodiscard]]
-        int32_t getFileNumber() const {
+        uint32_t getFileNumber() const {
             return pid.getFileNumber();
         }
 
         [[maybe_unused]]
         [[nodiscard]]
-        int32_t getPageNumber() const {
+        uint16_t getPageNumber() const {
             return pid.getPageNumber();
         }
 
         [[maybe_unused]]
         [[nodiscard]]
-        int16_t getRowPointerNumber() const {
+        uint16_t getRowPointerNumber() const {
             return pid.getRowPointerNumber();
         }
     };

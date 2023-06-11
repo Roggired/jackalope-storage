@@ -22,20 +22,20 @@ Key memoryMapKey::keyByPage8(const Page *page) {
 }
 
 [[maybe_unused]]
-Key memoryMapKey::createKey(int32_t fileNumber, int32_t pageNumber) {
+Key memoryMapKey::createKey(uint32_t fileNumber, uint16_t pageNumber) {
     int64_t key = (int64_t) fileNumber << 32;
     key |= (int64_t) pageNumber;
     return key;
 }
 
 [[maybe_unused]]
-int32_t memoryMapKey::fileNumberByKey(Key key) {
-    return (int32_t) ((key & MEMORY_MAP_KEY_FILE_NUMBER_MASK) >> 32);
+uint32_t memoryMapKey::fileNumberByKey(Key key) {
+    return (uint32_t) ((key & MEMORY_MAP_KEY_FILE_NUMBER_MASK) >> 32);
 }
 
 [[maybe_unused]]
-int32_t memoryMapKey::pageNumberByKey(Key key) {
-    return (int32_t) (key & MEMORY_MAP_KEY_PAGE_NUMBER_MASK);
+uint16_t memoryMapKey::pageNumberByKey(Key key) {
+    return (uint16_t) (key & MEMORY_MAP_KEY_PAGE_NUMBER_MASK);
 }
 
 [[maybe_unused]]
@@ -97,7 +97,7 @@ void MemoryMap::unloadPage(memoryMapKey::Key key) {
     lock_guard<mutex> locker(pageMapMutex);
 
     auto existedPage = pageMap.find(key);
-    if (existedPage != pageMap.end()) {
+    if (existedPage == pageMap.end()) {
         throw NoSuchPageException();
     }
 
@@ -109,7 +109,7 @@ Page& MemoryMap::getPageByKey(memoryMapKey::Key key) {
     lock_guard<mutex> locker(pageMapMutex);
 
     auto pageIterator = pageMap.find(key);
-    if (pageIterator != pageMap.end()) {
+    if (pageIterator == pageMap.end()) {
         throw NoSuchPageException();
     }
 

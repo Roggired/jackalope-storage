@@ -22,21 +22,21 @@ namespace memory {
     [[maybe_unused]]
     void destroyLocalMemoryMap(MemoryMap* localMemoryMap);
 
-    std::mutex sharedMemoryMapMutex;
-    MemoryMap* sharedMemoryMapPtr = nullptr;
+//    std::mutex sharedMemoryMapMutex;
+//    MemoryMap* sharedMemoryMapPtr = nullptr;
 
     /**
      * not thread safe
      */
-    [[maybe_unused]]
-    [[nodiscard]]
-    MemoryMap* initSharedMemoryMap(MemoryMapsConfig config);
+//    [[maybe_unused]]
+//    [[nodiscard]]
+//    MemoryMap* initSharedMemoryMap(MemoryMapsConfig config);
 
-    [[maybe_unused]]
-    void detachFromSharedMemoryMap(MemoryMap* sharedMemoryMap);
+//    [[maybe_unused]]
+//    void detachFromSharedMemoryMap(MemoryMap* sharedMemoryMap);
 
-    [[maybe_unused]]
-    [[nodiscard]]
-    MemoryMap* getSharedMemoryMap();
+//    [[maybe_unused]]
+//    [[nodiscard]]
+//    MemoryMap* getSharedMemoryMap();
 }
 #endif //JACKALOPE_STORAGE_MEMORY_MAP_FACTORY_HPP

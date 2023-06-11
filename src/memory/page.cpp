@@ -12,9 +12,9 @@ using namespace memory;
 // ==================================== PUBLIC SECTION =============================================================
 
 [[maybe_unused]]
-int16_t Page::vacuum(uint32_t eventHorizon) {
+uint16_t Page::vacuum(uint32_t eventHorizon) {
     std::list<PagePointer*> pointers;
-    int16_t vacuumedPointersNumber = 0;
+    uint16_t vacuumedPointersNumber = 0;
 
     iterateOverPointers([&pointers](PagePointer *pointer) { pointers.push_back(pointer); } );
 
@@ -27,7 +27,7 @@ int16_t Page::vacuum(uint32_t eventHorizon) {
             }
     );
 
-    int16_t localRowsOffset = PAGE_8_CONTENT_SIZE;
+    uint16_t localRowsOffset = PAGE_8_CONTENT_SIZE;
     for (auto pointer: pointers) {
         if (!pointer->isStatusUsed()) {
             continue;
@@ -75,14 +75,14 @@ int16_t Page::vacuum(uint32_t eventHorizon) {
     // 1 - used pointer
     // * - unused and not deallocated pointer
     // 0 - unused and deallocated pointer
-    auto localPointerOffset = (int16_t) (pointerOffset - sizeof(PagePointer));
+    auto localPointerOffset = (uint16_t) (pointerOffset - sizeof(PagePointer));
     auto* pagePointer = getPointerByOffset(localPointerOffset);
     while (pagePointer->status == POINTER_STATUS_UNUSED && localPointerOffset >= 0) {
-        localPointerOffset = (int16_t) (localPointerOffset - sizeof(PagePointer));
+        localPointerOffset = (uint16_t) (localPointerOffset - sizeof(PagePointer));
         pagePointer = getPointerByOffset(localPointerOffset);
     }
 
-    pointerOffset = (int16_t) (localPointerOffset + sizeof(PagePointer));
+    pointerOffset = (uint16_t) (localPointerOffset + sizeof(PagePointer));
 
     return vacuumedPointersNumber;
 }
@@ -93,7 +93,7 @@ PageGet Page::getByPid(uint32_t xid, models::PID pid) const {
         return emptyPageGet(PGS_INVALID_PID);
     }
 
-    int16_t targetPointerOffset = calcPointerOffsetByPid(pid);
+    uint16_t targetPointerOffset = calcPointerOffsetByPid(pid);
     PagePointer *pointer = getPointerByOffset(targetPointerOffset);
 
     if (!pointer->isStatusUsed()) {
@@ -114,13 +114,13 @@ PageGet Page::getByPid(uint32_t xid, models::PID pid) const {
 
 [[maybe_unused]]
 PagePut Page::put(uint32_t xid, Row row) {
-    int16_t rowSize = row.sizeWithHeader();
-    int16_t freeSpace = getFreeSpace();
+    uint16_t rowSize = row.sizeWithHeader();
+    uint16_t freeSpace = getFreeSpace();
     if (rowSize > freeSpace) {
         return notEnoughSpacePagePut();
     }
 
-    rowsOffset = (int16_t) (rowsOffset - rowSize);
+    rowsOffset = (uint16_t) (rowsOffset - rowSize);
 
     int16_t firstUnusedPointerOffset = findFirstUnusedPointerOffset();
     PagePointer *pointer;
@@ -150,7 +150,7 @@ PageRemove Page::remove(uint32_t xid, models::PID pid) {
         return PageRemove{PRS_INVALID_PID};
     }
 
-    int16_t targetPointerOffset = calcPointerOffsetByPid(pid);
+    uint16_t targetPointerOffset = calcPointerOffsetByPid(pid);
     PagePointer *pointer = getPointerByOffset(targetPointerOffset);
 
     if (!pointer->isStatusUsed()) {
@@ -173,7 +173,7 @@ void Page::setCommitted(uint32_t xid, models::PID pid) {
         throw PidInvalidException();
     }
 
-    int16_t targetPointerOffset = calcPointerOffsetByPid(pid);
+    uint16_t targetPointerOffset = calcPointerOffsetByPid(pid);
     PagePointer *pointer = getPointerByOffset(targetPointerOffset);
 
     if (!pointer->isStatusUsed()) {
@@ -201,7 +201,7 @@ void Page::setAborted(uint32_t xid, models::PID pid) {
         throw PidInvalidException();
     }
 
-    int16_t targetPointerOffset = calcPointerOffsetByPid(pid);
+    uint16_t targetPointerOffset = calcPointerOffsetByPid(pid);
     PagePointer *pointer = getPointerByOffset(targetPointerOffset);
 
     if (!pointer->isStatusUsed()) {
@@ -226,12 +226,12 @@ void Page::setAborted(uint32_t xid, models::PID pid) {
 // ==================================== PRIVATE SECTION =============================================================
 
 void Page::iterateOverPointers(const std::function<void(PagePointer *)> &consumer) {
-    int16_t pointersNumber = calcPointersNumber();
+    uint16_t pointersNumber = calcPointersNumber();
 
     models::PID currentPid(0, 0, 0);
-    int16_t currentPointerOffset;
+    uint16_t currentPointerOffset;
     PagePointer *currentPointer;
-    for (int16_t i = 0; i < pointersNumber; i++) {
+    for (uint16_t i = 0; i < pointersNumber; i++) {
         currentPid = models::PID(fileNumber, pageNumber, i);
         currentPointerOffset = calcPointerOffsetByPid(currentPid);
         currentPointer = getPointerByOffset(currentPointerOffset);
@@ -253,11 +253,11 @@ int16_t Page::findFirstUnusedPointerOffset() const {
     return currentPointerOffset;
 }
 
-PagePointer *Page::createPagePointerOnOffset(uint32_t xid, int16_t targetPointerOffset, Row row) {
+PagePointer *Page::createPagePointerOnOffset(uint32_t xid, uint16_t targetPointerOffset, Row row) {
     PagePointer *pointer = getPointerByOffset(targetPointerOffset);
     pointer->status = POINTER_STATUS_USED;
     pointer->rowPositionOffset = rowsOffset;
-    pointer->size = (int16_t) row.sizeWithHeader();
+    pointer->size = (uint16_t) row.sizeWithHeader();
     pointer->number = calcPointersNumber();
     // flags will be set in later operations
     pointer->xmin = xid;
@@ -288,16 +288,16 @@ Row Page::getRowOnPointerOffset(PagePointer *pointer) const {
     };
 }
 
-int16_t Page::calcPointersNumber() const {
-    return (int16_t) (pointerOffset / sizeof(PagePointer));
+uint16_t Page::calcPointersNumber() const {
+    return (uint16_t) (pointerOffset / sizeof(PagePointer));
 }
 
 models::PID Page::createPidByPointer(PagePointer *pagePointer) const {
     return {fileNumber, pageNumber, pagePointer->number};
 }
 
-int16_t Page::calcPointerOffsetByPid(models::PID requestedPid) {
-    return (int16_t) (requestedPid.getRowPointerNumber() * sizeof(PagePointer));
+uint16_t Page::calcPointerOffsetByPid(models::PID requestedPid) {
+    return (uint16_t) (requestedPid.getRowPointerNumber() * sizeof(PagePointer));
 }
 
 bool Page::isPidValid(models::PID requestedPid) const {
@@ -310,7 +310,7 @@ bool Page::isPidValid(models::PID requestedPid) const {
     return fileCorrect && pageCorrect && pointerCorrect;
 }
 
-PagePointer *Page::getPointerByOffset(int16_t offset) const {
+PagePointer *Page::getPointerByOffset(uint16_t offset) const {
     return (PagePointer *) (void *) (content + offset);
 }
 

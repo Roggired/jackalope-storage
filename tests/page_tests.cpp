@@ -36,24 +36,24 @@ RowHeader init_row_header() {
     };
 }
 
-int16_t placePagePointerAndRowWithTestStructInPageContent(
+uint16_t placePagePointerAndRowWithTestStructInPageContent(
         void *content,
-        int16_t previousRowPositionOffset,
-        int16_t pointerNumber,
+        uint16_t previousRowPositionOffset,
+        uint16_t pointerNumber,
         uint32_t pointerXmin,
         uint32_t pointerXmax,
         bool pointerXminCommitted,
         bool pointerXminAborted,
         bool pointerXmaxCommitted,
         bool pointerXmaxAborted,
-        int16_t gapBetweenRows
+        uint16_t gapBetweenRows
 ) {
     TestStruct testStruct = init_test_struct();
     RowHeader rowHeader = init_row_header();
     auto pagePointer = PagePointer{
             POINTER_STATUS_USED,
             0,
-            (int16_t) (previousRowPositionOffset - sizeof(RowHeader) - sizeof(TestStruct) - gapBetweenRows),
+            (uint16_t) (previousRowPositionOffset - sizeof(RowHeader) - sizeof(TestStruct) - gapBetweenRows),
             pointerXmin,
             pointerXmax,
             sizeof(RowHeader) + sizeof(TestStruct),
@@ -256,7 +256,7 @@ BOOST_AUTO_TEST_SUITE(pointer_tests)
         // first pointer USED and is deleted in the previously committed transaction which ID is before eventHorizon
         // second pointer USED and has xmax == 0(a)
         void *content = (void *) (new int8_t[PAGE_8_CONTENT_SIZE]{0});
-        int16_t currentRowsOffset = placePagePointerAndRowWithTestStructInPageContent(
+        uint16_t currentRowsOffset = placePagePointerAndRowWithTestStructInPageContent(
                 content,
                 PAGE_8_CONTENT_SIZE,
                 0,
@@ -282,12 +282,12 @@ BOOST_AUTO_TEST_SUITE(pointer_tests)
         );
 
         auto page = new Page(0, 1, PAGE_TYPE_SENSE, (int8_t *) content);
-        auto *ptrToPointerOffset = (int16_t *) ((int8_t *) page + 10);
+        auto *ptrToPointerOffset = (uint16_t *) ((int8_t *) page + 8);
         auto *ptrToRowsOffset = ptrToPointerOffset + 1;
         *ptrToPointerOffset = sizeof(PagePointer) * 2;
         *ptrToRowsOffset = currentRowsOffset;
 
-        int16_t vacuumedPointersNumber = page->vacuum(3);
+        uint16_t vacuumedPointersNumber = page->vacuum(3);
         BOOST_CHECK_EQUAL(1, vacuumedPointersNumber);
 
         PageGet pageGetByPointerNumber1 = page->getByPid(3, models::PID(0, 1, 0));
@@ -317,7 +317,7 @@ BOOST_AUTO_TEST_SUITE(pointer_tests)
         // first pointer USED and has xmax == 0(a)
         // second pointer USED and is deleted in the previously committed transaction which ID is before eventHorizon
         void *content = (void *) (new int8_t[PAGE_8_CONTENT_SIZE]{0});
-        int16_t currentRowsOffset = placePagePointerAndRowWithTestStructInPageContent(
+        uint16_t currentRowsOffset = placePagePointerAndRowWithTestStructInPageContent(
                 content,
                 PAGE_8_CONTENT_SIZE,
                 0,
@@ -343,12 +343,12 @@ BOOST_AUTO_TEST_SUITE(pointer_tests)
         );
 
         auto page = new Page(0, 1, PAGE_TYPE_SENSE, (int8_t *) content);
-        auto *ptrToPointerOffset = (int16_t *) ((int8_t *) page + 10);
+        auto *ptrToPointerOffset = (uint16_t *) ((int8_t *) page + 8);
         auto *ptrToRowsOffset = ptrToPointerOffset + 1;
         *ptrToPointerOffset = sizeof(PagePointer) * 2;
         *ptrToRowsOffset = currentRowsOffset;
 
-        int16_t vacuumedPointersNumber = page->vacuum(3);
+        uint16_t vacuumedPointersNumber = page->vacuum(3);
         BOOST_CHECK_EQUAL(1, vacuumedPointersNumber);
 
         PageGet pageGetByPointerNumber1 = page->getByPid(3, models::PID(0, 1, 0));
@@ -377,7 +377,7 @@ BOOST_AUTO_TEST_SUITE(pointer_tests)
         // first pointer USED and is deleted in the previously committed transaction which ID is before eventHorizon
         // second pointer USED and is deleted in the previously committed transaction which ID is before eventHorizon
         void *content = (void *) (new int8_t[PAGE_8_CONTENT_SIZE]{0});
-        int16_t currentRowsOffset = placePagePointerAndRowWithTestStructInPageContent(
+        uint16_t currentRowsOffset = placePagePointerAndRowWithTestStructInPageContent(
                 content,
                 PAGE_8_CONTENT_SIZE,
                 0,
@@ -403,19 +403,19 @@ BOOST_AUTO_TEST_SUITE(pointer_tests)
         );
 
         auto page = new Page(0, 1, PAGE_TYPE_SENSE, (int8_t *) content);
-        auto *ptrToPointerOffset = (int16_t *) ((int8_t *) page + 10);
+        auto *ptrToPointerOffset = (uint16_t *) ((int8_t *) page + 8);
         auto *ptrToRowsOffset = ptrToPointerOffset + 1;
         *ptrToPointerOffset = sizeof(PagePointer) * 2;
         *ptrToRowsOffset = currentRowsOffset;
 
-        int16_t vacuumedPointersNumber = page->vacuum(3);
+        uint16_t vacuumedPointersNumber = page->vacuum(3);
         BOOST_CHECK_EQUAL(2, vacuumedPointersNumber);
 
         PageGet pageGetByPointerNumber1 = page->getByPid(3, models::PID(0, 1, 0));
-        BOOST_CHECK_EQUAL(PGS_INVALID_PID, pageGetByPointerNumber1.status);
+        BOOST_CHECK_EQUAL(PGS_POINTER_IS_UNUSED, pageGetByPointerNumber1.status);
 
         PageGet pageGetByPointerNumber2 = page->getByPid(3, models::PID(0, 1, 1));
-        BOOST_CHECK_EQUAL(PGS_INVALID_PID, pageGetByPointerNumber2.status);
+        BOOST_CHECK_EQUAL(PGS_POINTER_IS_UNUSED, pageGetByPointerNumber2.status);
         delete page;
 
         delete[] (int8_t *) content;

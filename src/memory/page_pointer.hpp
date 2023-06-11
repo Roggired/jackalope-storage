@@ -17,13 +17,13 @@ namespace memory {
     #define POINTER_XMAX_COMMITTED_MASK 0x04 // 0000 0100
     #define POINTER_XMAX_ABORTED_MASK   0x08 // 0000 1000
     struct PagePointer {
-        int8_t status;
-        int8_t flags;
-        int16_t rowPositionOffset;
+        uint8_t status;
+        uint8_t flags;
+        uint16_t rowPositionOffset;
         uint32_t xmin;
         uint32_t xmax;
-        int16_t size;
-        int16_t number;
+        uint16_t size;
+        uint16_t number;
 
         [[maybe_unused]]
         void setXminCommited() {

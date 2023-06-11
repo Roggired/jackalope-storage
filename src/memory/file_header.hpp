@@ -11,12 +11,12 @@ namespace memory {
     #pragma pack(push, 1)
 
     #define FILE_HEADER_PAGE_8_TYPE 1
-    #define FILE_HEADER_RESERVED    7
+    #define FILE_HEADER_RESERVED    1
     struct FileHeader {
-        int32_t fileNumber;
-        int32_t pagesNumber;
-        int8_t type;
-        int8_t reserved[FILE_HEADER_RESERVED];
+        uint32_t fileNumber;
+        uint8_t type;
+        uint8_t reserved[FILE_HEADER_RESERVED];
+        uint16_t pagesNumber;
     };
     typedef FileHeader FileHeader;
 

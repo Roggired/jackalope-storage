@@ -64,7 +64,7 @@ Page& MemoryMap::loadPage(const Page *page8) {
 }
 
 [[maybe_unused]]
-Page& MemoryMap::createPage8(FileHeader fileHeader, int8_t pageType) {
+Page& MemoryMap::createPage(FileHeader fileHeader, int8_t pageType) {
     lock_guard<mutex> locker(pageMapMutex);
 
     Key key = createKey(fileHeader.fileNumber, fileHeader.pagesNumber);

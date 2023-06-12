@@ -14,7 +14,7 @@
 
 using namespace std;
 
-namespace free_space_index {
+namespace freeSpaceIndex {
     struct FSINode {
         uint16_t pageNumber;
         uint16_t freeSpace;
@@ -26,6 +26,8 @@ namespace free_space_index {
             return lhs.freeSpace > rhs.freeSpace;
         }
     };
+
+    class CantFindAppropriatePageException: public exception{};
 
     class FreeSpaceIndex {
     private:
@@ -43,8 +45,9 @@ namespace free_space_index {
         /**
          * Returns the largest page's number in which requested amount of space is free.
          * @param requestedFreeSpace
-         * @return page's number or -1. If the function's invocation returns -1, it means that there is no
-         * pages in the index at all or that there is no page in which requested amount of space is free.
+         * @throws CantFindAppropriatePageException if there is no pages in the index at all or if there is no page
+         * in which requested amount of space is free.
+         * @return page's number
          */
         [[maybe_unused]]
         [[nodiscard]]

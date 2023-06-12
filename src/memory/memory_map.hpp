@@ -97,7 +97,7 @@ namespace memory {
          */
         [[maybe_unused]]
         [[nodiscard]]
-        Page& createPage8(FileHeader fileHeader, int8_t pageType);
+        Page& createPage(FileHeader fileHeader, int8_t pageType);
 
         /**
          * Removes page with associated key from pageMap.

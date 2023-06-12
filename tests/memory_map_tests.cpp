@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_SUITE(memory_map_test_suite)
         };
         MemoryMap* memoryMap = initLocalMemoryMap(memoryMapsConfig);
 
-        Page& createdPage = memoryMap->createPage8(fileHeader, PAGE_TYPE_SENSE);
+        Page& createdPage = memoryMap->createPage(fileHeader, PAGE_TYPE_SENSE);
         models::PID pid(1, 0, 0);
         Page& fetchedPage = memoryMap->getPageByKey(keyByPid(pid));
 
@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_SUITE(memory_map_test_suite)
         };
         MemoryMap* memoryMap = initLocalMemoryMap(memoryMapsConfig);
 
-        Page& createdPage = memoryMap->createPage8(fileHeader, PAGE_TYPE_SENSE);
+        Page& createdPage = memoryMap->createPage(fileHeader, PAGE_TYPE_SENSE);
         models::PID pid(1, 0, 0);
         memoryMap->unloadPage(keyByPid(pid));
 
@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_SUITE(memory_map_test_suite)
         };
         MemoryMap* memoryMap = initLocalMemoryMap(memoryMapsConfig);
 
-        BOOST_CHECK_THROW(memoryMap->createPage8(fileHeader, PAGE_TYPE_SENSE), MemoryLimitException);
+        BOOST_CHECK_THROW(memoryMap->createPage(fileHeader, PAGE_TYPE_SENSE), MemoryLimitException);
     }
 
     BOOST_AUTO_TEST_CASE(memory_map_create_page_throws_on_already_existed_page_test) {
@@ -119,9 +119,9 @@ BOOST_AUTO_TEST_SUITE(memory_map_test_suite)
                 16*1024*1024
         };
         MemoryMap* memoryMap = initLocalMemoryMap(memoryMapsConfig);
-        memoryMap->createPage8(fileHeader, PAGE_TYPE_SENSE);
+        memoryMap->createPage(fileHeader, PAGE_TYPE_SENSE);
 
-        BOOST_CHECK_THROW(memoryMap->createPage8(fileHeader, PAGE_TYPE_SENSE), FileHeaderInvalidPagesNumberException);
+        BOOST_CHECK_THROW(memoryMap->createPage(fileHeader, PAGE_TYPE_SENSE), FileHeaderInvalidPagesNumberException);
     }
 
 BOOST_AUTO_TEST_SUITE_END()

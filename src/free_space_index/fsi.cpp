@@ -5,7 +5,7 @@
 #include "fsi.hpp"
 
 using namespace std;
-using namespace free_space_index;
+using namespace freeSpaceIndex;
 
 template<class Archive>
 void FreeSpaceIndex::serialize(Archive& boostArchive, const unsigned int version) const {
@@ -19,11 +19,11 @@ uint16_t FreeSpaceIndex::findAppropriatePageNumber(uint16_t requestedFreeSpace) 
 
     auto largestPageIterator = nodes.begin();
     if (largestPageIterator == nodes.end()) {
-        return -1;
+        throw CantFindAppropriatePageException();
     }
 
     if (largestPageIterator->freeSpace < requestedFreeSpace) {
-        return -1;
+        throw CantFindAppropriatePageException();
     }
 
     return largestPageIterator->pageNumber;
